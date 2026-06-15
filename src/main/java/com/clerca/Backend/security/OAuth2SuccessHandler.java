@@ -6,6 +6,7 @@ import com.clerca.Backend.repository.UserRepository;
 import com.clerca.Backend.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -23,6 +24,9 @@ public class OAuth2SuccessHandler
         private final UserRepository userRepository;
         private final JwtUtil jwtUtil;
         private final RefreshTokenService refreshTokenService;
+
+        @Value("${app.frontend-url}")
+        private String frontendUrl;
 
         public OAuth2SuccessHandler(
                         UserRepository userRepository,
@@ -44,10 +48,9 @@ public class OAuth2SuccessHandler
 
                 String email = oAuth2User.getAttribute("email");
                 String name = oAuth2User.getAttribute("name");
-                String picture = oAuth2User.getAttribute("picture"); 
+                String picture = oAuth2User.getAttribute("picture");
                 String sub = oAuth2User.getAttribute("sub");
 
-               
                 User user = userRepository.findByEmail(email)
                                 .map(existing -> {
                                         existing.setName(name);
@@ -67,7 +70,7 @@ public class OAuth2SuccessHandler
                 String accessToken = jwtUtil.generateToken(email);
                 String refreshToken = refreshTokenService.createToken(user);
 
-                String redirectUrl = "http://localhost:3000/oauth-callback"
+                String redirectUrl = frontendUrl + "/oauth-callback"
                                 + "?token=" + encode(accessToken)
                                 + "&refresh=" + encode(refreshToken)
                                 + "&name=" + encode(name != null ? name : "")
